@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skill Civilization — Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+
+  <!-- TOPBAR (shortcut navigasi + search + profil, sesuai mockup) -->
+  <header class="topbar">
+    <div class="topbar-brand" id="wilayahName">Skill Civilization</div>
+
+    <nav class="topbar-nav">
+      <a href="#" class="topbar-link" data-shortcut="dashboard">Home</a>
+      <a href="#" class="topbar-link disabled" data-shortcut="sotk" title="Segera hadir">SOTK</a>
+      <a href="#" class="topbar-link" data-shortcut="berita">Berita</a>
+      <a href="#" class="topbar-link" data-shortcut="foto">Foto</a>
+      <a href="#" class="topbar-link" data-shortcut="video">Video</a>
+    </nav>
+
+    <div class="topbar-search">
+      <input type="text" id="topbarSearch" placeholder="Cari data, menu, laporan...">
+    </div>
+
+    <div class="topbar-actions">
+      <div class="notif-wrapper">
+        <button id="notifBell" class="notif-bell">
+          🔔<span id="notifBadge" class="notif-badge hidden">0</span>
+        </button>
+        <div id="notifDropdown" class="notif-dropdown hidden">
+          <div class="notif-dropdown-header">
+            <span>Notifikasi</span>
+            <button id="notifMarkAllRead" class="notif-mark-all">Tandai semua dibaca</button>
+          </div>
+          <div id="notifList" class="notif-list"></div>
+        </div>
+      </div>
+      <span id="userName">Memuat...</span>
+      <span id="userRole" class="role-badge"></span>
+    </div>
+  </header>
+
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-section-label">Menu Utama</div>
+      <nav class="sidebar-menu">
+        <a href="#" class="menu-item active" data-menu="dashboard">Dashboard</a>
+        <a href="#" class="menu-item" data-menu="penduduk">Penduduk</a>
+        <a href="#" class="menu-item" data-menu="pengaduan">Pengaduan</a>
+        <a href="#" class="menu-item" data-menu="bansos">Bantuan Sosial</a>
+        <a href="#" class="menu-item" data-menu="surat">Surat Digital</a>
+        <a href="#" class="menu-item" data-menu="berita">Berita & Pengumuman</a>
+        <a href="#" class="menu-item" data-menu="forum">Forum Diskusi</a>
+        <a href="#" class="menu-item" data-menu="peta">Peta Wilayah</a>
+        <a href="#" class="menu-item" data-menu="statistik">Statistik & Analitik</a>
+        <a href="#" class="menu-item" data-menu="monitoring">Monitoring</a>
+        <a href="#" class="menu-item" data-menu="notifikasi">Notifikasi</a>
+      </nav>
+
+      <div class="sidebar-section-label">Pengaturan</div>
+      <nav class="sidebar-menu">
+        <a href="#" class="menu-item" data-menu="pengaturan">Pengaturan</a>
+        <a href="#" id="logoutBtn" class="menu-item">Keluar</a>
+      </nav>
+    </aside>
+
+    <!-- MAIN AREA -->
+    <div class="main-area">
+
+      <!-- NAVBAR (judul halaman saja, profil & notif sudah pindah ke topbar) -->
+      <header class="navbar">
+        <div class="navbar-title">Dashboard</div>
+      </header>
+
+      <!-- CONTENT -->
+
+      <main class="content">
+
+        <!-- VIEW PLACEHOLDER (menu yang belum ada modulnya) -->
+        <div id="view-placeholder" class="hidden">
+          <h2 id="contentTitle">Dashboard</h2>
+          <p id="contentBody">Selamat datang! Ini adalah kerangka dashboard. Setiap menu di sidebar
+            akan diisi modulnya satu per satu pada fase-fase berikutnya.</p>
+        </div>
+
+        <!-- VIEW DASHBOARD HOME (modul aktif, Fase 11.1) -->
+        <div id="view-dashboard-home">
+          <h2>Dashboard</h2>
+          <p class="subtitle" id="dashboardWelcome">Selamat datang!</p>
+
+          <div id="homeInsights" class="insight-grid"></div>
+
+          <div class="summary-grid">
+            <div class="summary-card">
+              <span class="summary-label">Total Penduduk</span>
+              <span class="summary-value" id="stat_penduduk">-</span>
+              <span class="summary-change" id="change_penduduk"></span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">Pengaduan Masuk</span>
+              <span class="summary-value" id="stat_pengaduan">-</span>
+              <span class="summary-change" id="change_pengaduan"></span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">Bantuan Sosial</span>
+              <span class="summary-value" id="stat_bansos">-</span>
+              <span class="summary-change" id="change_bansos"></span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">Surat Digital</span>
+              <span class="summary-value" id="stat_surat">-</span>
+              <span class="summary-change" id="change_surat"></span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">Pengumuman</span>
+              <span class="summary-value" id="stat_pengumuman">-</span>
+              <span class="summary-change" id="change_pengumuman"></span>
+            </div>
+          </div>
+
+          <div class="home-charts-grid">
+            <div class="chart-card">
+              <h3>Statistik Penduduk (6 Bulan Terakhir)</h3>
+              <canvas id="chartPendudukHome"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Persentase Pendidikan</h3>
+              <canvas id="chartPendidikanHome"></canvas>
+            </div>
+            <div class="chart-card">
+              <div class="panel-header">
+                <h3>Pengumuman Terbaru</h3>
+                <a href="#" class="panel-link" data-shortcut-panel="berita">Lihat Semua</a>
+              </div>
+              <div id="homePengumumanList" class="mini-list"></div>
+            </div>
+          </div>
+
+          <div class="home-charts-grid">
+            <div class="chart-card">
+              <div class="panel-header">
+                <h3>Pengaduan Terbaru</h3>
+                <a href="#" class="panel-link" data-shortcut-panel="pengaduan">Lihat Semua</a>
+              </div>
+              <div id="homePengaduanList" class="mini-list"></div>
+            </div>
+            <div class="chart-card">
+              <div class="panel-header">
+                <h3>Bantuan Sosial Terbaru</h3>
+                <a href="#" class="panel-link" data-shortcut-panel="bansos">Lihat Semua</a>
+              </div>
+              <div id="homeBansosList" class="mini-list"></div>
+            </div>
+            <div class="chart-card">
+              <div class="panel-header">
+                <h3>Aktivitas Sistem</h3>
+                <a href="#" class="panel-link" data-shortcut-panel="monitoring">Lihat Semua</a>
+              </div>
+              <div id="homeAktivitasList" class="mini-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW PENDUDUK (modul aktif, Fase 2) -->
+        <div id="view-penduduk" class="hidden">
+          <h2>Data Penduduk</h2>
+          <p class="subtitle">Tambah data warga baru</p>
+
+          <form id="pendudukForm" class="data-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>NIK *</label>
+                <input type="text" id="f_nik" required maxlength="16" placeholder="16 digit NIK">
+              </div>
+              <div class="form-group">
+                <label>Nama Lengkap *</label>
+                <input type="text" id="f_nama" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Tempat Lahir</label>
+                <input type="text" id="f_tempat_lahir">
+              </div>
+              <div class="form-group">
+                <label>Tanggal Lahir</label>
+                <input type="date" id="f_tanggal_lahir">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Jenis Kelamin</label>
+                <select id="f_jk">
+                  <option value="">-- pilih --</option>
+                  <option value="Laki-laki">Laki-laki</option>
+                  <option value="Perempuan">Perempuan</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Agama</label>
+                <input type="text" id="f_agama">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Pekerjaan</label>
+                <input type="text" id="f_pekerjaan">
+              </div>
+              <div class="form-group">
+                <label>Status Perkawinan</label>
+                <input type="text" id="f_status_kawin">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Pendidikan Terakhir</label>
+                <input type="text" id="f_pendidikan">
+              </div>
+              <div class="form-group">
+                <label>Alamat</label>
+                <input type="text" id="f_alamat">
+              </div>
+            </div>
+
+            <button type="submit">Simpan Data</button>
+            <p id="pendudukStatus"></p>
+          </form>
+
+          <div class="list-card">
+            <div class="list-header">
+              <h3>Daftar Warga</h3>
+              <input type="text" id="pendudukSearch" placeholder="Cari nama atau NIK...">
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>NIK</th>
+                  <th>Nama</th>
+                  <th>Jenis Kelamin</th>
+                  <th>Alamat</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="pendudukTableBody">
+                <tr><td colspan="6">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- VIEW PENGADUAN (modul aktif, Fase 4) -->
+        <div id="view-pengaduan" class="hidden">
+          <h2>Pengaduan Masyarakat</h2>
+          <p class="subtitle">Ajukan pengaduan baru</p>
+
+          <form id="pengaduanForm" class="data-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Judul *</label>
+                <input type="text" id="p_judul" required placeholder="Ringkasan singkat masalah">
+              </div>
+              <div class="form-group">
+                <label>Kategori</label>
+                <select id="p_kategori">
+                  <option value="">-- pilih --</option>
+                  <option value="Infrastruktur">Infrastruktur</option>
+                  <option value="Kebersihan">Kebersihan</option>
+                  <option value="Keamanan">Keamanan</option>
+                  <option value="Sosial">Sosial</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="flex: 1;">
+                <label>Lokasi</label>
+                <input type="text" id="p_lokasi" placeholder="Contoh: RT 02 / Jalan Merdeka">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="flex: 1;">
+                <label>Tandai Titik Lokasi di Peta (klik pada peta)</label>
+                <div id="pengaduanPickMap" style="height: 250px; border-radius: 8px; border: 1px solid #d1d5db;"></div>
+                <p id="pengaduanPickInfo" style="font-size: 0.8rem; color: #6b7280; margin-top: 0.3rem;">Belum ada titik dipilih.</p>
+                <input type="hidden" id="p_lat">
+                <input type="hidden" id="p_lng">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="flex: 1;">
+                <label>Deskripsi</label>
+                <textarea id="p_deskripsi" rows="3" placeholder="Jelaskan detail permasalahan..."></textarea>
+              </div>
+            </div>
+
+            <button type="submit">Kirim Pengaduan</button>
+            <p id="pengaduanStatus"></p>
+          </form>
+
+          <div class="list-card">
+            <div class="list-header">
+              <h3 id="pengaduanListTitle">Daftar Pengaduan</h3>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Judul</th>
+                  <th>Kategori</th>
+                  <th>Lokasi</th>
+                  <th>Pelapor</th>
+                  <th>Status</th>
+                  <th>Tanggal</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="pengaduanTableBody">
+                <tr><td colspan="7">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- VIEW BANTUAN SOSIAL (modul aktif, Fase 5) -->
+        <div id="view-bansos" class="hidden">
+
+          <!-- SUB-VIEW: Daftar Program -->
+          <div id="bansosProgramView">
+            <h2>Bantuan Sosial</h2>
+
+            <div id="bansosFormWrapper" class="hidden">
+              <p class="subtitle">Buat program bantuan baru</p>
+              <form id="bansosForm" class="data-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Nama Program *</label>
+                    <input type="text" id="b_nama" required placeholder="Contoh: BPNT Tahap 3">
+                  </div>
+                  <div class="form-group">
+                    <label>Sumber Dana</label>
+                    <select id="b_sumber">
+                      <option value="">-- pilih --</option>
+                      <option value="APBD">APBD</option>
+                      <option value="APBN">APBN</option>
+                      <option value="Dana Desa">Dana Desa</option>
+                      <option value="Lainnya">Lainnya</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Kuota Penerima</label>
+                    <input type="number" id="b_kuota" min="0" placeholder="Kosongkan jika tak terbatas">
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group" style="flex: 1;">
+                    <label>Deskripsi</label>
+                    <textarea id="b_deskripsi" rows="3" placeholder="Penjelasan singkat program..."></textarea>
+                  </div>
+                </div>
+
+                <button type="submit">Buat Program</button>
+                <p id="bansosStatus"></p>
+              </form>
+            </div>
+
+            <div class="list-card">
+              <div class="list-header">
+                <h3>Daftar Program Bantuan</h3>
+              </div>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nama Program</th>
+                    <th>Sumber Dana</th>
+                    <th>Kuota</th>
+                    <th>Dibuat</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="bansosTableBody">
+                  <tr><td colspan="5">Memuat data...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SUB-VIEW: Kelola Penerima (per program) -->
+          <div id="bansosPenerimaView" class="hidden">
+            <button id="btnKembaliProgram" class="btn-modal-cancel" style="margin-bottom:1rem;">← Kembali ke Daftar Program</button>
+            <h2 id="penerimaProgramTitle">Kelola Penerima</h2>
+
+            <div class="list-card" style="max-width:600px;">
+              <div class="list-header">
+                <h3>💡 Rekomendasi Calon Penerima</h3>
+              </div>
+              <p style="font-size:0.8rem; color:#6b7280; margin-bottom:0.8rem;">
+                Disaring otomatis dari warga terverifikasi yang belum terdaftar di program ini,
+                berdasarkan indikator kebutuhan (pekerjaan, pendidikan, riwayat bantuan).
+              </p>
+              <div id="rekomendasiPenerimaList"></div>
+            </div>
+
+            <div class="data-form" style="max-width:500px;">
+              <div class="form-group">
+                <label>Atau Cari & Tambah Manual (nama/NIK)</label>
+                <input type="text" id="penerimaSearchWarga" placeholder="Ketik minimal 3 huruf...">
+              </div>
+              <div id="penerimaSearchResults"></div>
+            </div>
+
+            <div class="list-card">
+              <div class="list-header">
+                <h3>Daftar Penerima</h3>
+              </div>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nama</th>
+                    <th>NIK</th>
+                    <th>Status</th>
+                    <th>Tanggal Penyaluran</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="penerimaTableBody">
+                  <tr><td colspan="5">Memuat data...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- VIEW BERITA & PENGUMUMAN (modul aktif, Fase 6) -->
+        <div id="view-berita" class="hidden">
+          <h2>Berita & Pengumuman</h2>
+
+          <div class="tabs" style="margin-bottom:1.2rem; max-width:500px;">
+            <button id="tabBerita" class="tab-btn active">Berita</button>
+            <button id="tabPengumuman" class="tab-btn">Pengumuman</button>
+            <button id="tabMedia" class="tab-btn">Media Center</button>
+          </div>
+
+          <!-- SECTION: BERITA -->
+          <div id="beritaSection">
+            <div id="beritaFormWrapper" class="hidden">
+              <form id="beritaForm" class="data-form">
+                <input type="hidden" id="berita_editing_id">
+                <div class="form-row">
+                  <div class="form-group" style="flex:1;">
+                    <label>Judul *</label>
+                    <input type="text" id="berita_judul" required>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group" style="flex:1;">
+                    <label>URL Gambar (opsional)</label>
+                    <input type="text" id="berita_gambar" placeholder="https://...">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group" style="flex:1;">
+                    <label>Konten</label>
+                    <textarea id="berita_konten" rows="4"></textarea>
+                  </div>
+                </div>
+                <button type="submit" id="beritaSubmitBtn">Publikasikan Berita</button>
+                <button type="button" id="beritaCancelEditBtn" class="btn-modal-cancel hidden">Batal Edit</button>
+                <p id="beritaStatus"></p>
+              </form>
+            </div>
+
+            <div id="beritaListContainer" class="news-list"></div>
+          </div>
+
+          <!-- SECTION: PENGUMUMAN -->
+          <div id="pengumumanSection" class="hidden">
+            <div id="pengumumanFormWrapper" class="hidden">
+              <form id="pengumumanForm" class="data-form">
+                <input type="hidden" id="pengumuman_editing_id">
+                <div class="form-row">
+                  <div class="form-group" style="flex:1;">
+                    <label>Judul *</label>
+                    <input type="text" id="pengumuman_judul" required>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group" style="flex:1;">
+                    <label>Konten</label>
+                    <textarea id="pengumuman_konten" rows="4"></textarea>
+                  </div>
+                </div>
+                <button type="submit" id="pengumumanSubmitBtn">Publikasikan Pengumuman</button>
+                <button type="button" id="pengumumanCancelEditBtn" class="btn-modal-cancel hidden">Batal Edit</button>
+                <p id="pengumumanStatus"></p>
+              </form>
+            </div>
+
+            <div id="pengumumanListContainer" class="news-list"></div>
+          </div>
+
+          <!-- SECTION: MEDIA CENTER -->
+          <div id="mediaSection" class="hidden">
+            <div id="mediaFormWrapper" class="hidden">
+              <form id="mediaForm" class="data-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Judul (opsional)</label>
+                    <input type="text" id="media_judul" placeholder="Contoh: Gotong Royong RT 02">
+                  </div>
+                  <div class="form-group">
+                    <label>Tipe *</label>
+                    <select id="media_tipe" required>
+                      <option value="foto">Foto</option>
+                      <option value="video">Video</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group" style="flex:1;">
+                    <label>Pilih File *</label>
+                    <input type="file" id="media_file" accept="image/*,video/*" required>
+                  </div>
+                </div>
+                <button type="submit" id="mediaSubmitBtn">Unggah</button>
+                <p id="mediaStatus"></p>
+              </form>
+            </div>
+
+            <div id="mediaGallery" class="media-gallery"></div>
+          </div>
+        </div>
+
+        <!-- VIEW SURAT DIGITAL (modul aktif, Fase 7) -->
+        <div id="view-surat" class="hidden">
+          <h2>Surat Digital</h2>
+          <p class="subtitle">Ajukan permohonan surat</p>
+
+          <form id="suratForm" class="data-form">
+            <div class="form-row">
+              <div class="form-group" style="flex:1;">
+                <label>Jenis Surat *</label>
+                <select id="s_jenis" required>
+                  <option value="">Memuat pilihan...</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:1;">
+                <label>Keperluan *</label>
+                <textarea id="s_keperluan" rows="3" required placeholder="Contoh: Melamar pekerjaan di PT Maju Jaya"></textarea>
+              </div>
+            </div>
+            <button type="submit">Ajukan Permohonan</button>
+            <p id="suratStatus"></p>
+          </form>
+
+          <div class="list-card">
+            <div class="list-header">
+              <h3 id="suratListTitle">Daftar Permohonan</h3>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Jenis Surat</th>
+                  <th>Pemohon</th>
+                  <th>Keperluan</th>
+                  <th>Status</th>
+                  <th>Tanggal</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="suratTableBody">
+                <tr><td colspan="6">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- VIEW FORUM DISKUSI (modul aktif, Fase 9) -->
+        <div id="view-forum" class="hidden">
+
+          <!-- SUB-VIEW: Daftar Thread -->
+          <div id="forumListView">
+            <h2>Forum Diskusi</h2>
+            <p class="subtitle">Mulai diskusi baru</p>
+
+            <form id="forumThreadForm" class="data-form">
+              <div class="form-row">
+                <div class="form-group" style="flex:1;">
+                  <label>Judul *</label>
+                  <input type="text" id="ft_judul" required placeholder="Topik yang ingin didiskusikan">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="flex:1;">
+                  <label>Isi</label>
+                  <textarea id="ft_konten" rows="3" placeholder="Jelaskan detail topik Anda..."></textarea>
+                </div>
+              </div>
+              <button type="submit">Posting</button>
+              <p id="forumThreadStatus"></p>
+            </form>
+
+            <div id="forumThreadList" class="news-list"></div>
+          </div>
+
+          <!-- SUB-VIEW: Detail Thread + Komentar -->
+          <div id="forumDetailView" class="hidden">
+            <button id="btnKembaliForum" class="btn-modal-cancel" style="margin-bottom:1rem;">← Kembali ke Forum</button>
+
+            <div id="forumDetailThread" class="news-card" style="max-width:700px;"></div>
+
+            <h3 style="margin-top:1.5rem; margin-bottom:0.8rem; color:#0f3d3a;">Komentar</h3>
+            <div id="forumKomentarList" style="max-width:700px; margin-bottom:1rem;"></div>
+
+            <form id="forumKomentarForm" class="data-form" style="max-width:700px;">
+              <div class="form-group">
+                <textarea id="fk_konten" rows="2" required placeholder="Tulis komentar..."></textarea>
+              </div>
+              <button type="submit">Kirim Komentar</button>
+              <p id="forumKomentarStatus"></p>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- VIEW FORUM DISKUSI (modul aktif, Fase 9) -->
+        <div id="view-forum" class="hidden">
+
+          <!-- SUB-VIEW: Daftar Thread -->
+          <div id="forumListView">
+            <h2>Forum Diskusi</h2>
+            <p class="subtitle">Mulai diskusi baru</p>
+
+            <form id="forumThreadForm" class="data-form">
+              <div class="form-row">
+                <div class="form-group" style="flex:1;">
+                  <label>Judul *</label>
+                  <input type="text" id="ft_judul" required placeholder="Topik yang ingin didiskusikan">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="flex:1;">
+                  <label>Isi</label>
+                  <textarea id="ft_konten" rows="3" placeholder="Tulis diskusi Anda..."></textarea>
+                </div>
+              </div>
+              <button type="submit">Buat Thread</button>
+              <p id="forumThreadStatus"></p>
+            </form>
+
+            <div id="forumThreadList" class="news-list"></div>
+          </div>
+
+          <!-- SUB-VIEW: Detail Thread + Komentar -->
+          <div id="forumDetailView" class="hidden">
+            <button id="btnKembaliForum" class="btn-modal-cancel" style="margin-bottom:1rem;">← Kembali ke Daftar Thread</button>
+
+            <div id="forumDetailThread" class="news-card" style="max-width:700px;"></div>
+
+            <div class="list-card" style="max-width:700px;">
+              <div class="list-header">
+                <h3>Komentar</h3>
+              </div>
+              <div id="forumKomentarList"></div>
+
+              <form id="forumKomentarForm" style="margin-top:1rem; display:flex; gap:0.5rem;">
+                <input type="text" id="fk_konten" placeholder="Tulis komentar..." required style="flex:1; padding:0.55rem; border:1px solid #d1d5db; border-radius:6px;">
+                <button type="submit" class="btn-modal-confirm">Kirim</button>
+              </form>
+              <p id="forumKomentarStatus"></p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- VIEW PETA WILAYAH (modul aktif, Fase 10) -->
+        <div id="view-peta" class="hidden">
+          <h2>Peta Wilayah</h2>
+          <p class="subtitle">Sebaran data pengaduan di wilayah</p>
+          <div id="petaMap" style="height: 500px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);"></div>
+          <div class="peta-legend">
+            <span><i style="background:#2563eb;"></i> Baru</span>
+            <span><i style="background:#d97706;"></i> Diproses</span>
+            <span><i style="background:#16a34a;"></i> Selesai</span>
+          </div>
+        </div>
+
+        <!-- VIEW STATISTIK & ANALITIK (modul aktif, Fase 11.2) -->
+        <div id="view-statistik" class="hidden">
+          <h2>Statistik & Analitik</h2>
+
+          <div class="chart-grid">
+            <div class="chart-card">
+              <h3>Pertumbuhan Penduduk (6 Bulan Terakhir)</h3>
+              <canvas id="chartPenduduk"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Status Pengaduan</h3>
+              <canvas id="chartPengaduan"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW MONITORING (modul aktif, Fase 11.3) -->
+        <div id="view-monitoring" class="hidden">
+          <h2>Monitoring</h2>
+          <p class="subtitle">Aktivitas terbaru di seluruh sistem</p>
+          <div id="monitoringFeed" class="monitoring-feed"></div>
+        </div>
+
+      </main>
+
+    </div>
+  </div>
+
+  <!-- MODAL GENERIK: dipakai untuk input catatan di berbagai modul -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3 id="modalTitle">Catatan</h3>
+      <textarea id="modalTextarea" rows="4" placeholder="Tulis catatan di sini..."></textarea>
+      <div class="modal-actions">
+        <button id="modalCancelBtn" class="btn-modal-cancel">Batal</button>
+        <button id="modalConfirmBtn" class="btn-modal-confirm">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="penduduk.js"></script>
+  <script src="pengaduan.js"></script>
+  <script src="bansos.js"></script>
+  <script src="berita.js"></script>
+  <script src="media.js"></script>
+  <script src="surat.js"></script>
+  <script src="notifikasi.js"></script>
+  <script src="forum.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="peta.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="dashboard-home.js"></script>
+  <script src="statistik.js"></script>
+  <script src="monitoring.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
